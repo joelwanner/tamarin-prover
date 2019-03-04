@@ -11,6 +11,7 @@
 --
 module Theory.Tools.IntruderRules (
     subtermIntruderRules
+  , dosSubtermIntruderRules
   , dhIntruderRules
   , bpIntruderRules
   , xorIntruderRules
@@ -79,14 +80,18 @@ rule iequality:
 -}
 -- | @specialIntruderRules@ returns the special intruder rules that are
 --   included independently of the message theory
-specialIntruderRules :: Bool -> [IntrRuleAC]
-specialIntruderRules diff =
+specialIntruderRules :: Bool -> Bool -> [IntrRuleAC]
+specialIntruderRules dos diff =
     [ kuRule CoerceRule      [kdFact x_var]                 (x_var)         [] 
     , kuRule PubConstrRule   []                             (x_pub_var)     [(x_pub_var)]
-    , kuRule FreshConstrRule [freshFact x_fresh_var] (x_fresh_var)          []
-    , Rule ISendRule [kuFact x_var]  [inFact x_var] [kLogFact x_var]        []
-    , Rule IRecvRule [outFact x_var] [kdFact x_var] []                      []
-    ] ++
+    , kuRule FreshConstrRule [freshFact x_fresh_var] (x_fresh_var)          []]
+    ++
+    if not dos
+    then [ Rule ISendRule [kuFact x_var]  [inFact x_var] [kLogFact x_var]        []
+         , Rule IRecvRule [outFact x_var] [kdFact x_var] []                      []
+         ]
+    else []
+    ++
     if diff 
        then [ Rule IEqualityRule [kuFact x_var, kdFact x_var]  [] [] [] ]
        else []
@@ -189,6 +194,9 @@ subtermIntruderRules :: Bool -> MaudeSig -> [IntrRuleAC]
 subtermIntruderRules diff maudeSig =
    minimizeIntruderRules diff $ concatMap (destructionRules diff) (S.toList $ stRules maudeSig)
      ++ constructionRules (stFunSyms maudeSig) ++ privateConstructorRules (S.toList $ stRules maudeSig) 
+
+dosSubtermIntruderRules :: MaudeSig -> [IntrRuleAC]
+dosSubtermIntruderRules maudeSig = []
 
 -- | @constructionRules fSig@ returns the construction rules for the given
 -- function signature @fSig@

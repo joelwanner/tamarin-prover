@@ -757,8 +757,10 @@ builtins =
           *> extendSig signatureMaudeSig
       , try (symbol "revealing-signing")
           *> extendSig revealSignatureMaudeSig
-      , symbol "hashing"
+      , try (symbol "hashing")
           *> extendSig hashMaudeSig
+      , symbol "dos"
+          *> extendSig dosMaudeSig
       ]
 
 functions :: Parser ()

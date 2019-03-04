@@ -63,7 +63,8 @@ import           Theory
 import           Theory.Text.Parser                  (parseIntruderRules, parseOpenTheory, parseOpenTheoryString, parseOpenDiffTheory, parseOpenDiffTheoryString)
 import           Theory.Tools.AbstractInterpretation (EvaluationStyle(..))
 import           Theory.Tools.IntruderRules          (specialIntruderRules, subtermIntruderRules
-                                                     , multisetIntruderRules, xorIntruderRules)
+                                                     , multisetIntruderRules, xorIntruderRules
+                                                     , dosSubtermIntruderRules)
 import           Theory.Tools.Wellformedness
 
 import           Main.Console
@@ -429,7 +430,10 @@ addMessageDeductionRuleVariants thy0
   | otherwise     = return thy
   where
     msig         = get (sigpMaudeSig . thySignature) thy0
-    rules        = subtermIntruderRules False msig ++ specialIntruderRules False
+    rules        = specialIntruderRules (enableDoS msig) False
+                   ++ (if enableDoS msig
+                         then dosSubtermIntruderRules msig
+                         else subtermIntruderRules False msig)
                    ++ (if enableMSet msig then multisetIntruderRules else [])
                    ++ (if enableXor msig then xorIntruderRules else [])
     thy          = addIntrRuleACs rules thy0
@@ -447,7 +451,7 @@ addMessageDeductionRuleVariantsDiff thy0
   | otherwise     = return $ addIntrRuleLabels thy
   where
     msig         = get (sigpMaudeSig . diffThySignature) thy0
-    rules diff'  = subtermIntruderRules diff' msig ++ specialIntruderRules diff'
+    rules diff'  = subtermIntruderRules diff' msig ++ specialIntruderRules False diff'
                     ++ (if enableMSet msig then multisetIntruderRules else [])
                     ++ (if enableXor msig then xorIntruderRules else [])
     thy          = addIntrRuleACsDiffBoth (rules False) $ addIntrRuleACsDiffBothDiff (rules True) thy0

@@ -45,12 +45,14 @@ module Term.Unification (
   , enableBP
   , enableMSet
   , enableXor
+  , enableDoS
   , enableDiff
   , minimalMaudeSig
   , enableDiffMaudeSig
   , dhMaudeSig
   , bpMaudeSig
   , xorMaudeSig
+  , dosMaudeSig
   , msetMaudeSig
   , pairMaudeSig
   , symEncMaudeSig

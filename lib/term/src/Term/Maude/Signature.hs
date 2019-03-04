@@ -18,6 +18,7 @@ module Term.Maude.Signature (
   , enableMSet
   , enableDiff
   , enableXor
+  , enableDoS
   , stFunSyms
   , stRules
   , funSyms
@@ -36,6 +37,7 @@ module Term.Maude.Signature (
   , msetMaudeSig
   , bpMaudeSig
   , xorMaudeSig
+  , dosMaudeSig
   , minimalMaudeSig
   , enableDiffMaudeSig
 
@@ -77,6 +79,7 @@ data MaudeSig = MaudeSig
     , enableBP           :: Bool
     , enableMSet         :: Bool
     , enableXor          :: Bool
+    , enableDoS          :: Bool
     , enableDiff         :: Bool
     , stFunSyms          :: S.Set NoEqSym -- ^ function signature for subterm theory
     , stRules            :: S.Set CtxtStRule  -- ^ rewriting rules for subterm theory
@@ -90,7 +93,7 @@ data MaudeSig = MaudeSig
 
 -- | Smart constructor for maude signatures. Computes funSyms and irreducibleFunSyms.
 maudeSig :: MaudeSig -> MaudeSig
-maudeSig msig@(MaudeSig {enableDH,enableBP,enableMSet,enableXor,enableDiff=_,stFunSyms,stRules}) =
+maudeSig msig@(MaudeSig {enableDH,enableBP,enableMSet,enableXor,enableDoS,enableDiff=_,stFunSyms,stRules}) =
     msig {enableDH=enableDH||enableBP, funSyms=allfuns, irreducibleFunSyms=irreduciblefuns}
   where
     allfuns = (S.map NoEq stFunSyms)
@@ -105,18 +108,19 @@ maudeSig msig@(MaudeSig {enableDH,enableBP,enableMSet,enableXor,enableDiff=_,stF
 
 -- | A monoid instance to combine maude signatures.
 instance Semigroup MaudeSig where
-    MaudeSig dh1 bp1 mset1 xor1 diff1 stFunSyms1 stRules1 _ _ <>
-      MaudeSig dh2 bp2 mset2 xor2 diff2 stFunSyms2 stRules2 _ _ =
+    MaudeSig dh1 bp1 mset1 xor1 dos1 diff1 stFunSyms1 stRules1 _ _ <>
+      MaudeSig dh2 bp2 mset2 xor2 dos2 diff2 stFunSyms2 stRules2 _ _ =
           maudeSig (mempty {enableDH=dh1||dh2
                            ,enableBP=bp1||bp2
                            ,enableMSet=mset1||mset2
                            ,enableXor=xor1||xor2
+                           ,enableDoS=dos1||dos2
                            ,enableDiff=diff1||diff2
                            ,stFunSyms=S.union stFunSyms1 stFunSyms2
                            ,stRules=S.union stRules1 stRules2})
 
 instance Monoid MaudeSig where
-    mempty = MaudeSig False False False False False S.empty S.empty S.empty S.empty
+    mempty = MaudeSig False False False False False False S.empty S.empty S.empty S.empty
 
 -- | Non-AC function symbols.
 noEqFunSyms :: MaudeSig -> NoEqFunSig
@@ -147,11 +151,12 @@ rrulesForMaudeSig (MaudeSig {enableDH, enableBP, enableMSet, enableXor, stRules}
 ------------------------------------------------------------------------------
 
 -- | Maude signatures for the AC symbols.
-dhMaudeSig, bpMaudeSig, msetMaudeSig, xorMaudeSig :: MaudeSig
+dhMaudeSig, bpMaudeSig, msetMaudeSig, xorMaudeSig, dosMaudeSig :: MaudeSig
 dhMaudeSig   = maudeSig $ mempty {enableDH=True}
 bpMaudeSig   = maudeSig $ mempty {enableBP=True}
 msetMaudeSig = maudeSig $ mempty {enableMSet=True}
 xorMaudeSig  = maudeSig $ mempty {enableXor=True}
+dosMaudeSig  = maudeSig $ mempty {enableDoS=True}
 
 -- | Maude signatures for the default subterm symbols.
 --pairMaudeSig :: Bool -> MaudeSig
@@ -196,6 +201,7 @@ prettyMaudeSig sig = P.vcat
       , (enableBP,   "bilinear-pairing")
       , (enableMSet, "multiset")
       , (enableXor,  "xor")
+      , (enableDoS,  "dos")
       ]
 
     ppFunSymb (f,(k,priv)) = P.text $ BC.unpack f ++ "/" ++ show k ++ showPriv priv
