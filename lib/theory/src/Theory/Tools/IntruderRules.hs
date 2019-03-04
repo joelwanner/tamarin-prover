@@ -84,13 +84,15 @@ specialIntruderRules :: Bool -> Bool -> [IntrRuleAC]
 specialIntruderRules dos diff =
     [ kuRule CoerceRule      [kdFact x_var]                 (x_var)         [] 
     , kuRule PubConstrRule   []                             (x_pub_var)     [(x_pub_var)]
-    , kuRule FreshConstrRule [freshFact x_fresh_var] (x_fresh_var)          []]
-    ++
+    , kuRule FreshConstrRule [freshFact x_fresh_var] (x_fresh_var)          []
+    ] ++
     if not dos
     then [ Rule ISendRule [kuFact x_var]  [inFact x_var] [kLogFact x_var]        []
          , Rule IRecvRule [outFact x_var] [kdFact x_var] []                      []
          ]
-    else []
+    else [ Rule ICreateRule [] [costFact x_var] [costFact x_var] []
+         , Rule ISendRule [kuFact x_var, costFact x_var] [inFact x_var] [kLogFact x_var, sumFact [x_var, x_var, x_var]] []
+         ]
     ++
     if diff 
        then [ Rule IEqualityRule [kuFact x_var, kdFact x_var]  [] [] [] ]

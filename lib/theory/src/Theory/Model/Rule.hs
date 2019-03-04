@@ -81,6 +81,7 @@ module Theory.Model.Rule (
   , isProtocolRule
   , isConstantRule
   , isSubtermRule
+  , isICreateRule
   , containsNewVars
   , getRuleName
   , getRuleNameDiff
@@ -448,6 +449,7 @@ data IntrRuleACInfo =
   | PubConstrRule
   | FreshConstrRule
   | IEqualityRule -- Necessary for diff
+  | ICreateRule -- Necessary for dos
   deriving( Ord, Eq, Show, Data, Typeable, Generic)
 instance NFData IntrRuleACInfo
 instance Binary IntrRuleACInfo
@@ -628,6 +630,10 @@ isIRecvRule = (IntrInfo IRecvRule ==) . ruleName
 isISendRule :: HasRuleName r => r -> Bool
 isISendRule = (IntrInfo ISendRule ==) . ruleName
 
+-- | True iff the rule is the special dos adversary create rule.
+isICreateRule :: HasRuleName r => r -> Bool
+isICreateRule = (IntrInfo ICreateRule ==) . ruleName
+
 -- | True iff the rule is the special coerce rule.
 isCoerceRule :: HasRuleName r => r -> Bool
 isCoerceRule = (IntrInfo CoerceRule ==) . ruleName
@@ -689,6 +695,7 @@ getRuleName ru = case ruleName ru of
                                       PubConstrRule     -> "PubConstr"
                                       FreshConstrRule   -> "FreshConstr"
                                       IEqualityRule     -> "Equality"
+                                      ICreateRule       -> "Create"
                       ProtoInfo p -> case p of
                                       FreshRule   -> "FreshRule"
                                       StandRule s -> s
@@ -1031,6 +1038,7 @@ prettyIntrRuleACInfo rn = text $ case rn of
     FreshConstrRule      -> "fresh"
     PubConstrRule        -> "pub"
     IEqualityRule        -> "iequality"
+    ICreateRule          -> "icreate"
     ConstrRule name      -> prefixIfReserved ('c' : BC.unpack name)
     DestrRule name _ _ _ -> prefixIfReserved ('d' : BC.unpack name)
 --     DestrRule name i -> prefixIfReserved ('d' : BC.unpack name ++ "_" ++ show i)
