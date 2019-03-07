@@ -76,6 +76,8 @@ module Theory.Model.Fact (
   -- ** DoS adversary
   , costFact
   , sumFact
+  , pathOutFact
+  , onPathFact
   , uniqueFact
 
   -- * NFact
@@ -284,6 +286,12 @@ costFact = Fact (ProtoFact Linear "C" 1) S.empty . return
 
 sumFact :: [t] -> Fact t
 sumFact = Fact (ProtoFact Persistent "Sum" 3) S.empty
+
+pathOutFact :: [t] -> Fact t
+pathOutFact = Fact (ProtoFact Linear "POut" 3) S.empty
+
+onPathFact :: [t] -> Fact t
+onPathFact = Fact (ProtoFact Persistent "OnPath" 2) S.empty
 
 uniqueFact :: t -> Fact t
 uniqueFact = Fact (ProtoFact Linear "Unique" 1) S.empty . return

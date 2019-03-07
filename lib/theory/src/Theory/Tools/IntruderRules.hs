@@ -91,6 +91,7 @@ specialIntruderRules diff dos =
          ]
     else [ Rule ICreateRule [] [costFact c_zero] [uniqueFact init_lit] []
          , Rule ISendRule [kuFact x_var, costFact c_var, sumFact [c_var, c_net, c_var_new]] [inFact x_var, costFact c_var_new] [kLogFact x_var] []
+         , Rule IRecvRule [pathOutFact [a_var, b_var, x_var]] [kdFact x_var] [onPathFact [a_var, b_var]] []
          ]
     ++
     if diff 
@@ -107,6 +108,8 @@ specialIntruderRules diff dos =
     c_zero      = fAppNoEq (pack "cZERO", (0, Public)) []
     c_net       = fAppNoEq (pack "cNET",  (0, Public)) []
     init_lit    = constTerm (Name PubName (NameId "initI"))
+    a_var       = varTerm (LVar "A" LSortPub 0)
+    b_var       = varTerm (LVar "B" LSortPub 0)
 
 
 ------------------------------------------------------------------------------
