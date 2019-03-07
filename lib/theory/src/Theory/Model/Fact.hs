@@ -320,6 +320,7 @@ factTagMultiplicity tag = case tag of
     ProtoFact multi _ _ -> multi
     KUFact              -> Persistent
     KDFact              -> Persistent
+    SumFact             -> Persistent
     _                   -> Linear
 
 -- | The arity of a 'FactTag'.
