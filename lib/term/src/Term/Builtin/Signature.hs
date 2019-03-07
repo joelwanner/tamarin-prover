@@ -39,6 +39,12 @@ extractMessageSym = ("getMessage",(1, Public))
 trueSym :: NoEqSym
 trueSym = ("true",(0, Public))
 
+-- | Cost constants used in DoS verification.
+cZeroSym, cNetSym, cPkSym :: NoEqSym
+cZeroSym = ("cZERO",(0, Public))
+cNetSym  = ("cNET",(0, Public))
+cPkSym   = ("cPK",(0, Public))
+
 ----------------------------------------------------------------------
 -- Builtin signatures
 ----------------------------------------------------------------------
@@ -62,3 +68,8 @@ revealSignatureFunSig = S.fromList $ [ revealSignSym, revealVerifySym, extractMe
 -- | The signature for hashing.
 hashFunSig :: NoEqFunSig
 hashFunSig = S.fromList [ hashSym ]
+
+-- | The signature for cost theory
+costFunSig :: NoEqFunSig
+costFunSig = S.fromList $ [ cZeroSym, cNetSym, cPkSym ]
+

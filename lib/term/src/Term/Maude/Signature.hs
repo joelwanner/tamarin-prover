@@ -156,7 +156,6 @@ dhMaudeSig   = maudeSig $ mempty {enableDH=True}
 bpMaudeSig   = maudeSig $ mempty {enableBP=True}
 msetMaudeSig = maudeSig $ mempty {enableMSet=True}
 xorMaudeSig  = maudeSig $ mempty {enableXor=True}
-dosMaudeSig  = maudeSig $ mempty {enableDoS=True}
 
 -- | Maude signatures for the default subterm symbols.
 --pairMaudeSig :: Bool -> MaudeSig
@@ -168,6 +167,7 @@ asymEncMaudeSig         = maudeSig $ mempty {stFunSyms=asymEncFunSig,stRules=asy
 signatureMaudeSig       = maudeSig $ mempty {stFunSyms=signatureFunSig,stRules=signatureRules}
 revealSignatureMaudeSig = maudeSig $ mempty {stFunSyms=revealSignatureFunSig,stRules=revealSignatureRules}
 hashMaudeSig            = maudeSig $ mempty {stFunSyms=hashFunSig}
+dosMaudeSig             = maudeSig $ mempty {enableDoS=True,stFunSyms=costFunSig}
 
 -- | The minimal maude signature.
 minimalMaudeSig :: Bool -> MaudeSig
