@@ -69,7 +69,6 @@ module Theory.Model.Fact (
   , inFactAnn
   , kLogFact
   , dedLogFact
-  , costLogFact
   , protoFact
   , protoFactAnn
   , annotateFact
@@ -281,12 +280,8 @@ kLogFact = protoFact Linear "K" . return
 dedLogFact :: t -> Fact t
 dedLogFact = Fact DedFact S.empty . return
 
--- TODO: What do the arguments in the constructor mean?
 costFact :: t -> Fact t
-costFact = Fact CostFact S.empty . return
-
-costLogFact :: t -> Fact t
-costLogFact = protoFact Linear "ICost" . return
+costFact t = Fact CostFact S.empty [t]
 
 sumFact :: [t] -> Fact t
 sumFact ts = Fact SumFact S.empty ts
@@ -461,7 +456,7 @@ factTagName tag = case tag of
     FreshFact         -> "Fr"
     (ProtoFact _ n _) -> n
     TermFact          -> "Term"
-    CostFact          -> "ICost"
+    CostFact          -> "C"
     SumFact           -> "Sum"
 
 -- | Show a fact tag as a 'String'. This is the 'factTagName' prefixed with

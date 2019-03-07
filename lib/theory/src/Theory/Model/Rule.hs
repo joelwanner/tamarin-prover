@@ -712,6 +712,7 @@ getRuleNameDiff ru = case ruleName ru of
                                       PubConstrRule     -> "PubConstr"
                                       FreshConstrRule   -> "FreshConstr"
                                       IEqualityRule     -> "Equality"
+                                      ICreateRule       -> "Create"
                       ProtoInfo p -> "Proto" ++ case p of
                                       FreshRule   -> "FreshRule"
                                       StandRule s -> s
