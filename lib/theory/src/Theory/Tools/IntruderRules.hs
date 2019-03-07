@@ -11,7 +11,6 @@
 --
 module Theory.Tools.IntruderRules (
     subtermIntruderRules
-  , dosSubtermIntruderRules
   , dhIntruderRules
   , bpIntruderRules
   , xorIntruderRules
@@ -81,7 +80,7 @@ rule iequality:
 -- | @specialIntruderRules@ returns the special intruder rules that are
 --   included independently of the message theory
 specialIntruderRules :: Bool -> Bool -> [IntrRuleAC]
-specialIntruderRules dos diff =
+specialIntruderRules diff dos =
     [ kuRule CoerceRule      [kdFact x_var]                 (x_var)         [] 
     , kuRule PubConstrRule   []                             (x_pub_var)     [(x_pub_var)]
     , kuRule FreshConstrRule [freshFact x_fresh_var] (x_fresh_var)          []
@@ -104,7 +103,7 @@ specialIntruderRules dos diff =
     x_pub_var   = varTerm (LVar "x"  LSortPub   0)
     x_fresh_var = varTerm (LVar "x"  LSortFresh 0)
     c_var       = varTerm (LVar "c" LSortMsg 0)
-    c_var_new   = varTerm (LVar "c" LSortMsg 0)
+    c_var_new   = varTerm (LVar "c_new" LSortMsg 0)
     c_zero      = fAppNoEq (pack "cZERO", (0, Public)) []
     c_net       = fAppNoEq (pack "cNET",  (0, Public)) []
 
@@ -196,24 +195,29 @@ minimizeIntruderRules diff rules =
 
 -- | @subtermIntruderRules diff maudeSig@ returns the set of intruder rules for
 --   the subterm (not Xor, DH, and MSet) part of the given signature.
-subtermIntruderRules :: Bool -> MaudeSig -> [IntrRuleAC]
-subtermIntruderRules diff maudeSig =
+subtermIntruderRules :: Bool -> Bool -> MaudeSig -> [IntrRuleAC]
+subtermIntruderRules diff dos maudeSig =
    minimizeIntruderRules diff $ concatMap (destructionRules diff) (S.toList $ stRules maudeSig)
-     ++ constructionRules (stFunSyms maudeSig) ++ privateConstructorRules (S.toList $ stRules maudeSig) 
-
-dosSubtermIntruderRules :: MaudeSig -> [IntrRuleAC]
-dosSubtermIntruderRules maudeSig = []
+     ++ constructionRules dos (stFunSyms maudeSig) ++ privateConstructorRules (S.toList $ stRules maudeSig) 
 
 -- | @constructionRules fSig@ returns the construction rules for the given
 -- function signature @fSig@
-constructionRules :: NoEqFunSig -> [IntrRuleAC]
-constructionRules fSig =
+constructionRules :: Bool -> NoEqFunSig -> [IntrRuleAC]
+constructionRules dos fSig =
     [ createRule s k | (s,(k,Public)) <- S.toList fSig ]
   where
-    createRule s k = Rule (ConstrRule (append (pack "_") s)) (map kuFact vars) [concfact] [concfact] []
-      where vars     = take k [ varTerm (LVar "x"  LSortMsg i) | i <- [0..] ]
-            m        = fAppNoEq (s,(k,Public)) vars
-            concfact = kuFact m
+    createRule s k =
+      Rule (ConstrRule (append (pack "_") s)) premfacts concfacts [actfact] []
+      where vars      = take k [ varTerm (LVar "x"  LSortMsg i) | i <- [0..] ]
+            m         = fAppNoEq (s,(k,Public)) vars
+            premfacts = (map kuFact vars) ++ if s == pack "sign"
+              then [costFact c_var, sumFact [c_var, c_pk, c_var_new]]
+              else []
+            concfacts = [kuFact m] ++ if s == pack "sign" then [costFact c_var_new] else []
+            actfact   = kuFact m
+            c_var     = varTerm (LVar "c" LSortMsg 0)
+            c_var_new = varTerm (LVar "c_new" LSortMsg 0)
+            c_pk      = fAppNoEq (pack "cPK", (0, Public)) []
 
 ------------------------------------------------------------------------------
 -- Diffie-Hellman Intruder Rules

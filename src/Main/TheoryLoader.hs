@@ -63,8 +63,7 @@ import           Theory
 import           Theory.Text.Parser                  (parseIntruderRules, parseOpenTheory, parseOpenTheoryString, parseOpenDiffTheory, parseOpenDiffTheoryString)
 import           Theory.Tools.AbstractInterpretation (EvaluationStyle(..))
 import           Theory.Tools.IntruderRules          (specialIntruderRules, subtermIntruderRules
-                                                     , multisetIntruderRules, xorIntruderRules
-                                                     , dosSubtermIntruderRules)
+                                                     , multisetIntruderRules, xorIntruderRules)
 import           Theory.Tools.Wellformedness
 
 import           Main.Console
@@ -430,10 +429,9 @@ addMessageDeductionRuleVariants thy0
   | otherwise     = return thy
   where
     msig         = get (sigpMaudeSig . thySignature) thy0
-    rules        = specialIntruderRules (enableDoS msig) False
-                   ++ (if enableDoS msig
-                         then dosSubtermIntruderRules msig
-                         else subtermIntruderRules False msig)
+    dos          = enableDoS msig
+    rules        = specialIntruderRules False dos
+                   ++ subtermIntruderRules False dos msig
                    ++ (if enableMSet msig then multisetIntruderRules else [])
                    ++ (if enableXor msig then xorIntruderRules else [])
     thy          = addIntrRuleACs rules thy0
@@ -451,7 +449,8 @@ addMessageDeductionRuleVariantsDiff thy0
   | otherwise     = return $ addIntrRuleLabels thy
   where
     msig         = get (sigpMaudeSig . diffThySignature) thy0
-    rules diff'  = subtermIntruderRules diff' msig ++ specialIntruderRules False diff'
+    dos          = enableDoS msig
+    rules diff'  = specialIntruderRules diff' dos ++ subtermIntruderRules diff' dos msig 
                     ++ (if enableMSet msig then multisetIntruderRules else [])
                     ++ (if enableXor msig then xorIntruderRules else [])
     thy          = addIntrRuleACsDiffBoth (rules False) $ addIntrRuleACsDiffBothDiff (rules True) thy0
