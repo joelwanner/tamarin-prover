@@ -222,9 +222,13 @@ labelNodeId = \i rules parent -> do
     -- | Import a rule with all its variables renamed to fresh variables.
     importRule ru = someRuleACInst ru `evalBindT` noBindings
 
-    mkISendRuleAC ann m = return $ Rule (IntrInfo (ISendRule))
-                                    [kuFactAnn ann m] [inFact m] [kLogFact m] []
+    c_var       = varTerm (LVar "c" LSortMsg 0)
+    c_var_new   = varTerm (LVar "c_new" LSortMsg 0)
+    c_net       = fAppNoEq (BC.pack "cNET",  (0, Public)) []
 
+    mkISendRuleAC ann m = return $ Rule (IntrInfo (ISendRule))
+                                    --[kuFactAnn ann m] [inFact m] [kLogFact m] []
+         [kuFactAnn ann m, costFact c_var, sumFact [c_var, c_net, c_var_new]] [inFact m, costFact c_var_new] [kLogFact m] []
 
     mkFreshRuleAC m = Rule (ProtoInfo (ProtoRuleACInstInfo FreshRule [] []))
                            [] [freshFact m] [] [m]
@@ -233,12 +237,12 @@ labelNodeId = \i rules parent -> do
 
     exploitPrem i ru (v, fa) = case fa of
         -- CR-rule *DG2_2* specialized for *In* facts.
-        Fact InFact ann [m] -> do
-            j <- freshLVar "vf" LSortNode
-            ruKnows <- mkISendRuleAC ann m
-            modM sNodes (M.insert j ruKnows)
-            modM sEdges (S.insert $ Edge (j, ConcIdx 0) (i, v))
-            exploitPrems j ruKnows
+        --Fact InFact ann [m] -> do
+        --    j <- freshLVar "vf" LSortNode
+        --    ruKnows <- mkISendRuleAC ann m
+        --    modM sNodes (M.insert j ruKnows)
+        --    modM sEdges (S.insert $ Edge (j, ConcIdx 0) (i, v))
+        --    exploitPrems j ruKnows
 
         -- CR-rule *DG2_2* specialized for *Fr* facts.
         Fact FreshFact _ [m] -> do
