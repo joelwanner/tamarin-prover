@@ -379,7 +379,6 @@ factReports thy = concat
           kLogFact undefined
         : dedLogFact undefined
         : kuFact undefined
-        : onPathFact [undefined, undefined]
         : (do RuleItem ru <- get thyItems thy; get rActs ru)
 
     inexistentActions = do
