@@ -91,7 +91,7 @@ specialIntruderRules diff dos =
          ]
     else [ Rule ICreateRule [] [costFact c_zero] [uniqueFact init_lit] []
          , Rule IRecvRule [outFact x_var] [kdFact x_var] [] []
-         , Rule ISendRule [kuFact x_var, costFact c_var] [inFact x_var, costFact c_var_new] [kLogFact x_var] []
+         , Rule ISendRule [kuFact x_var, costFact c_var] [inFact x_var, costFact c_new] [kLogFact x_var] []
          ]
     ++
     if diff 
@@ -104,7 +104,6 @@ specialIntruderRules diff dos =
     x_pub_var   = varTerm (LVar "x"  LSortPub   0)
     x_fresh_var = varTerm (LVar "x"  LSortFresh 0)
     c_var       = varTerm (LVar "c" LSortMsg 0)
-    c_var_new   = varTerm (LVar "c_new" LSortMsg 0)
     c_zero      = fAppNoEq (pack "cZERO", (0, Public)) []
     c_net       = fAppNoEq (pack "cNET",  (0, Public)) []
     c_new       = fAppNoEq (pack "add",  (2, Public)) [c_var, c_net]
@@ -216,13 +215,13 @@ constructionRules dos fSig =
       where vars      = take k [ varTerm (LVar "x"  LSortMsg i) | i <- [0..] ]
             m         = fAppNoEq (s,(k,Public)) vars
             premfacts = (map kuFact vars) ++ if s `elem` (map pack ["sign", "aenc", "adec"])
-              then [costFact c_var, sumFact [c_var, c_pk, c_var_new]]
+              then [costFact c_var]
               else []
-            concfacts = [kuFact m] ++ if s == pack "sign" then [costFact c_var_new] else []
+            concfacts = [kuFact m] ++ if s == pack "sign" then [costFact c_new] else []
             actfact   = kuFact m
             c_var     = varTerm (LVar "c" LSortMsg 0)
-            c_var_new = varTerm (LVar "c_new" LSortMsg 0)
             c_pk      = fAppNoEq (pack "cPK", (0, Public)) []
+            c_new     = fAppNoEq (pack "add",  (2, Public)) [c_var, c_pk]
 
 ------------------------------------------------------------------------------
 -- Diffie-Hellman Intruder Rules
