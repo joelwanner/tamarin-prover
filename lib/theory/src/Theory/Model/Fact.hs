@@ -281,7 +281,7 @@ dedLogFact :: t -> Fact t
 dedLogFact = Fact DedFact S.empty . return
 
 costFact :: t -> Fact t
-costFact = Fact (ProtoFact Linear "C" 1) S.empty . return
+costFact = Fact (ProtoFact Linear "C" 1) (S.fromList [NoSources]) . return
 
 sumFact :: [t] -> Fact t
 sumFact = Fact (ProtoFact Persistent "Sum" 3) S.empty
