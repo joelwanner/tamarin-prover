@@ -91,7 +91,7 @@ specialIntruderRules diff dos =
          ]
     else [ Rule ICreateRule [] [costFact c_zero] [uniqueFact init_lit] []
          , Rule IRecvRule [outFact x_var] [kdFact x_var] [] []
-         , Rule ISendRule [kuFact x_var, costFact c_var] [inFact x_var] [kLogFact x_var] []
+         , Rule ISendRule [kuFact x_var, costFact c_var] [inFact x_var, costFact c_new] [kLogFact x_var] []
          ]
     ++
     if diff 
