@@ -41,6 +41,7 @@ trueSym = ("true",(0, Public))
 
 -- | Cost constants used in DoS verification.
 cZeroSym, cNetSym, cPkSym :: NoEqSym
+cAdd     = ("add",(2, Public))
 cZeroSym = ("cZERO",(0, Public))
 cNetSym  = ("cNET",(0, Public))
 cPkSym   = ("cPK",(0, Public))
