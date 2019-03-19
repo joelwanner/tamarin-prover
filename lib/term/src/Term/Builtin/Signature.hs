@@ -40,8 +40,8 @@ trueSym :: NoEqSym
 trueSym = ("true",(0, Public))
 
 -- | Cost constants used in DoS verification.
-cZeroSym, cNetSym, cPkSym :: NoEqSym
-cAdd     = ("add",(2, Public))
+cAddSym, cZeroSym, cNetSym, cPkSym :: NoEqSym
+cAddSym  = ("add",(2, Public))
 cZeroSym = ("cZERO",(0, Public))
 cNetSym  = ("cNET",(0, Public))
 cPkSym   = ("cPK",(0, Public))
@@ -72,5 +72,5 @@ hashFunSig = S.fromList [ hashSym ]
 
 -- | The signature for cost theory
 costFunSig :: NoEqFunSig
-costFunSig = S.fromList $ [ cZeroSym, cNetSym, cPkSym ]
+costFunSig = S.fromList $ [ cAddSym, cZeroSym, cNetSym, cPkSym ]
 
