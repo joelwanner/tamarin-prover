@@ -247,12 +247,20 @@ dhIntruderRules diff = reader $ \hnd -> minimizeIntruderRules diff $
     x_var_1 = varTerm (LVar "x" LSortMsg 1)
 
     expRule mkInfo kudFact mkAction =
-        Rule mkInfo [bfact, efact] [concfact] (mkAction concfact) []
+        Rule mkInfo ([bfact, efact] ++ prem_cost) ([concfact] ++ conc_cost)
+          (mkAction concfact) []
       where
         bfact = kudFact x_var_0
         efact = kuFact  x_var_1
         conc = fAppExp (x_var_0, x_var_1)
         concfact = kudFact conc
+
+        c_var     = varTerm (LVar "c" LSortMsg 0)
+        c_var_new = varTerm (LVar "c_new" LSortMsg 0)
+        c_pk      = fAppNoEq (pack "cPK", (0, Public)) []
+
+        prem_cost = [costFact c_var, sumFact [c_var, c_pk, c_var_new]]
+        conc_cost = [costFact c_var_new]
 
     multRule mkInfo kudFact mkAction =
         Rule mkInfo [bfact, efact] [concfact] (mkAction concfact) []
@@ -274,7 +282,6 @@ dhIntruderRules diff = reader $ \hnd -> minimizeIntruderRules diff $
       where
         conc     = fAppNoEq oneSym []
         concfact = kudFact conc
-
 
 -- | @variantsIntruder mh irule@ computes the deconstruction-variants
 -- of a given intruder rule @irule@
