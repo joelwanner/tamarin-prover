@@ -95,10 +95,10 @@ specialIntruderRules diff budget =
     x_pub_var   = varTerm (LVar "x"  LSortPub   0)
     x_fresh_var = varTerm (LVar "x"  LSortFresh 0)
 
-    o_send = fAppNoEq (pack "oSend", (0, (Public, Nothing))) []
-    o_recv = fAppNoEq (pack "oRecv", (0, (Public, Nothing))) []
-    sendPrems = kuFact x_var : [tokenFact o_send | budget]
-    recvPrems = outFact x_var : [tokenFact o_recv | budget]
+    op_send   = fAppNoEq (pack "oSend", (0, (Public, Nothing))) []
+    op_recv   = fAppNoEq (pack "oRecv", (0, (Public, Nothing))) []
+    sendPrems = kuFact x_var : [tokenFact op_send | budget]
+    recvPrems = outFact x_var : [tokenFact op_recv | budget]
 
 
 ------------------------------------------------------------------------------
@@ -116,7 +116,7 @@ destructionRules diff budget
     go _      _                       []     _ _                     = []
     -- term already in premises, but necessary for constant conclusions
     go _      (viewTerm -> FApp _ _)  (_:[]) _ _ | (frees rhs /= []) = []
-    go uprems (viewTerm -> FApp (NoEq (f,(_,(Public,_)))) as) (i:p) n pd =
+    go uprems (viewTerm -> FApp (NoEq (f,(_,(Public,op)))) as) (i:p) n pd =
         irule ++ go uprems' t' p funs posname
       where
         uprems' = uprems++[ t | (j, t) <- zip [0..] as, i /= j ]
@@ -124,10 +124,15 @@ destructionRules diff budget
         funs = append (append n (pack "_")) f
         posname = "_" ++ show i ++ pd
         name    = append (pack posname) funs
+
+        mk_token (Just o) = [tokenFact const]
+          where const = fAppNoEq (pack o, (0, (Public, Nothing))) []
+        mk_token Nothing = []
+
+        prems = ((kdFact  t'):(map kuFact uprems')) ++ (mk_token op)
         irule = if {-trace (show lhs ++ " " ++ show pos ++ " " ++ show posname ++ " " ++ show rhs ++ " " ++ show (lhs `atPos` pos) ++ " " ++ show (frees rhs == []))-} (t' /= rhs && rhs `notElem` uprems')
                 then [ Rule (DestrRule name (-1) (rhs == lhs `atPos` pos) (frees rhs == []))
-                            ((kdFact  t'):(map kuFact uprems'))
-                            [kdFact rhs] [] [] ]
+                            prems [kdFact rhs] [] [] ]
                 else []
     go _      (viewTerm -> FApp (NoEq (_,(_,(Private,_)))) _) _     _ _  = []
     go _      (viewTerm -> Lit _)                         (_:_) _ _  =
@@ -204,10 +209,16 @@ constructionRules :: Bool -> NoEqFunSig -> [IntrRuleAC]
 constructionRules budget fSig =
     [ createRule s k op | (s,(k,(Public,op))) <- S.toList fSig ]
   where
-    createRule s k op = Rule (ConstrRule (append (pack "_") s)) (map kuFact vars) [concfact] [concfact] []
+    createRule s k op = Rule (ConstrRule (append (pack "_") s))
+      prems [concfact] [concfact] []
       where vars     = take k [ varTerm (LVar "x"  LSortMsg i) | i <- [0..] ]
             m        = fAppNoEq (s,(k,(Public,op))) vars
             concfact = kuFact m
+
+            mk_token (Just o) = [tokenFact const]
+              where const = fAppNoEq (pack o, (0, (Public, Nothing))) []
+            mk_token Nothing = []
+            prems = (map kuFact vars) ++ (mk_token op)
 
 ------------------------------------------------------------------------------
 -- Diffie-Hellman Intruder Rules
