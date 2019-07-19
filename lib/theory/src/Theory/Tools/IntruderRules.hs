@@ -95,8 +95,8 @@ specialIntruderRules diff budget =
     x_pub_var   = varTerm (LVar "x"  LSortPub   0)
     x_fresh_var = varTerm (LVar "x"  LSortFresh 0)
 
-    o_send = fAppNoEq (pack "oSend", (0, Public)) []
-    o_recv = fAppNoEq (pack "oRecv", (0, Public)) []
+    o_send = fAppNoEq (pack "oSend", (0, (Public, Nothing))) []
+    o_recv = fAppNoEq (pack "oRecv", (0, (Public, Nothing))) []
     sendPrems = kuFact x_var : [tokenFact o_send | budget]
     recvPrems = outFact x_var : [tokenFact o_recv | budget]
 
@@ -116,7 +116,7 @@ destructionRules diff budget
     go _      _                       []     _ _                     = []
     -- term already in premises, but necessary for constant conclusions
     go _      (viewTerm -> FApp _ _)  (_:[]) _ _ | (frees rhs /= []) = []
-    go uprems (viewTerm -> FApp (NoEq (f,(_,Public))) as) (i:p) n pd =
+    go uprems (viewTerm -> FApp (NoEq (f,(_,(Public,_)))) as) (i:p) n pd =
         irule ++ go uprems' t' p funs posname
       where
         uprems' = uprems++[ t | (j, t) <- zip [0..] as, i /= j ]
@@ -129,7 +129,7 @@ destructionRules diff budget
                             ((kdFact  t'):(map kuFact uprems'))
                             [kdFact rhs] [] [] ]
                 else []
-    go _      (viewTerm -> FApp (NoEq (_,(_,Private))) _) _     _ _  = []
+    go _      (viewTerm -> FApp (NoEq (_,(_,(Private,_)))) _) _     _ _  = []
     go _      (viewTerm -> Lit _)                         (_:_) _ _  =
         error "IntruderRules.destructionRules: impossible, position invalid"   
      
@@ -143,7 +143,7 @@ destructionRules _ _ _ = []
 privateConstructorEquations :: [CtxtStRule] -> [(LNTerm, ByteString)]
 privateConstructorEquations rs = case rs of
     []    -> []
-    (CtxtStRule lhs (StRhs _ (viewTerm -> FApp (NoEq (vname,(0,Private))) _))):xs
+    (CtxtStRule lhs (StRhs _ (viewTerm -> FApp (NoEq (vname,(0,(Private,_)))) _))):xs
           -> (lhs, vname):(privateConstructorEquations xs)
     _:xs  -> privateConstructorEquations xs
     
@@ -163,7 +163,7 @@ privateConstructorRules rules = map createRule $ derivablePrivateConstants (priv
   where
     -- creates a constructor rule for constant s
     createRule s = Rule (ConstrRule (append (pack "_") s)) [] [concfact] [concfact] []
-      where m        = fAppNoEq (s,(0,Private)) []
+      where m        = fAppNoEq (s,(0,(Private,Nothing))) []
             concfact = kuFact m
 
 -- | Simple removal of subsumed rules for auto-generated subterm intruder rules.
@@ -202,11 +202,11 @@ subtermIntruderRules diff maudeSig =
 -- function signature @fSig@
 constructionRules :: Bool -> NoEqFunSig -> [IntrRuleAC]
 constructionRules budget fSig =
-    [ createRule s k | (s,(k,Public)) <- S.toList fSig ]
+    [ createRule s k op | (s,(k,(Public,op))) <- S.toList fSig ]
   where
-    createRule s k = Rule (ConstrRule (append (pack "_") s)) (map kuFact vars) [concfact] [concfact] []
+    createRule s k op = Rule (ConstrRule (append (pack "_") s)) (map kuFact vars) [concfact] [concfact] []
       where vars     = take k [ varTerm (LVar "x"  LSortMsg i) | i <- [0..] ]
-            m        = fAppNoEq (s,(k,Public)) vars
+            m        = fAppNoEq (s,(k,(Public,op))) vars
             concfact = kuFact m
 
 ------------------------------------------------------------------------------

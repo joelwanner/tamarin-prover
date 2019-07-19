@@ -86,7 +86,7 @@ data Privacy = Private | Public
   deriving (Eq, Ord, Typeable, Data, Show, Generic, NFData, Binary)
 
 -- | NoEq function symbols (with respect to the background theory).
-type NoEqSym = (ByteString, (Int, Privacy)) -- ^ operator name, arity, private
+type NoEqSym = (ByteString, (Int, (Privacy, Maybe String))) -- ^ operator name, arity, properties
 
 -- | C(ommutative) function symbols
 data CSym = EMap
@@ -127,23 +127,23 @@ pmultSymString = "pmult"
 
 pairSym, diffSym, expSym, invSym, oneSym, fstSym, sndSym, pmultSym, zeroSym :: NoEqSym
 -- | Pairing.
-pairSym  = ("pair",(2,Public))
+pairSym  = ("pair", (2, (Public, Nothing)))
 -- | Diff.
-diffSym  = (diffSymString,(2,Private))
+diffSym  = (diffSymString, (2, (Private, Nothing)))
 -- | Exponentiation.
-expSym   = (expSymString,(2,Public))
+expSym   = (expSymString, (2, (Public, Nothing)))
 -- | The inverse in the groups of exponents.
-invSym   = (invSymString,(1,Public))
+invSym   = (invSymString, (1, (Public, Just "oInv")))
 -- | The one in the group of exponents.
-oneSym   = (oneSymString,(0,Public))
+oneSym   = (oneSymString, (0, (Public, Nothing)))
 -- | Projection of first component of pair.
-fstSym   = ("fst",(1,Public))
+fstSym   = ("fst", (1, (Public, Nothing)))
 -- | Projection of second component of pair.
-sndSym   = ("snd",(1,Public))
+sndSym   = ("snd", (1, (Public, Nothing)))
 -- | Multiplication of points (in G1) on elliptic curve by scalars.
-pmultSym = (pmultSymString,(2,Public))
+pmultSym = (pmultSymString, (2, (Public, Just "oPmult")))
 -- | The zero for XOR.
-zeroSym  = (zeroSymString,(0,Public))
+zeroSym  = (zeroSymString, (0, (Public, Nothing)))
 
 ----------------------------------------------------------------------
 -- Fixed signatures

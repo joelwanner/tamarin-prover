@@ -326,16 +326,16 @@ niFactors t = case viewTerm2 t of
 -- | @containsPrivate t@ returns @True@ if @t@ contains private function symbols.
 containsPrivate :: Term t -> Bool
 containsPrivate t = case viewTerm t of
-    Lit _                          -> False
-    FApp (NoEq (_,(_,Private))) _  -> True
-    FApp _                      as -> any containsPrivate as
+    Lit _                              -> False
+    FApp (NoEq (_,(_,(Private,_)))) _  -> True
+    FApp _                          as -> any containsPrivate as
 
 -- | containsNoPrivateExcept t t2@ returns @True@ if @t2@ contains private function symbols other than @t@.
 containsNoPrivateExcept :: [BC.ByteString] -> Term t -> Bool
 containsNoPrivateExcept funs t = case viewTerm t of
-    Lit _                          -> True
-    FApp (NoEq (f,(_,Private))) as -> (elem f funs) && (all (containsNoPrivateExcept funs) as)
-    FApp _                      as -> all (containsNoPrivateExcept funs) as
+    Lit _                              -> True
+    FApp (NoEq (f,(_,(Private,_)))) as -> (elem f funs) && (all (containsNoPrivateExcept funs) as)
+    FApp _                          as -> all (containsNoPrivateExcept funs) as
 
     
 -- | A term is *simple* iff there is an instance of this term that can be

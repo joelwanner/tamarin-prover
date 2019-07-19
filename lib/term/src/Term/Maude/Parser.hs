@@ -106,8 +106,8 @@ ppMaudeACSym o =
 
 -- | Pretty print a non-AC symbol for Maude.
 ppMaudeNoEqSym :: NoEqSym -> ByteString
-ppMaudeNoEqSym (o,(_,Private)) = funSymPrefixPriv <> replaceUnderscore o
-ppMaudeNoEqSym (o,(_,Public))  = funSymPrefix     <> replaceUnderscore o
+ppMaudeNoEqSym (o,(_,(Private,_))) = funSymPrefixPriv <> replaceUnderscore o
+ppMaudeNoEqSym (o,(_,(Public,_)))  = funSymPrefix     <> replaceUnderscore o
 
 -- | Pretty print a C symbol for Maude.
 ppMaudeCSym :: CSym -> ByteString
@@ -190,7 +190,7 @@ ppTheory msig = BC.unlines $
     theoryOpNoEq priv fsort =
         "  op " <> (if (priv==Private) then funSymPrefixPriv else funSymPrefix) <> fsort <>" ."
     theoryOp = theoryOpNoEq Public
-    theoryFunSym (s,(ar,priv)) =
+    theoryFunSym (s,(ar,(priv,_))) =
         theoryOpNoEq priv (replaceUnderscore s <> " : " <> (B.concat $ replicate ar "Msg ") <> " -> Msg")
     theoryRule (l `RRule` r) =
         "  eq " <> ppMaude lm <> " = " <> ppMaude rm <> " [variant] ."
@@ -271,21 +271,21 @@ parseTerm msig = choice
                ]
    ]
   where
-    consSym = ("cons",(2,Public))
-    nilSym  = ("nil",(0,Public))
+    consSym = ("cons", (2, (Public, Nothing)))
+    nilSym  = ("nil", (0, (Public, Nothing)))
 
     parseFunSym ident args
       | op `elem` allowedfunSyms = replaceMinusFun op
       | otherwise                =
           error $ "Maude.Parser.parseTerm: unknown function "
-                  ++ "symbol `"++ show op ++"', not in "
+                  ++ "symbol `" ++ show f ++ "', not in "
                   ++ show allowedfunSyms
       where prefixLen      = BC.length funSymPrefix
             special        = ident `elem` ["list", "cons", "nil" ]
             priv           = if (not special) && BC.isPrefixOf funSymPrefixPriv ident 
                                then Private else Public
-            op             = (if special then ident else BC.drop prefixLen ident
-                             , ( length args, priv))
+            f              = if special then ident else BC.drop prefixLen ident
+            op             = (f, (length args, (priv, Nothing)))
             allowedfunSyms = [consSym, nilSym]
                 ++ (map replaceUnderscoreFun $ S.toList $ noEqFunSyms msig)
 

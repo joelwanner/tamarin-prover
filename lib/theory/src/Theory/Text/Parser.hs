@@ -147,12 +147,13 @@ llitNoPub = asum [freshTerm <$> freshName, varTerm <$> msgvar]
 
 -- | Lookup the arity of a non-ac symbol. Fails with a sensible error message
 -- if the operator is not known.
-lookupArity :: String -> Parser (Int, Privacy)
+lookupArity :: String -> Parser (Int, (Privacy, Maybe String))
 lookupArity op = do
     maudeSig <- getState
-    case lookup (BC.pack op) (S.toList (noEqFunSyms maudeSig) ++ [(emapSymString, (2,Public))]) of
+    case lookup (BC.pack op) (S.toList (noEqFunSyms maudeSig)
+      ++ [(emapSymString, (2, (Public, Nothing)))]) of
         Nothing    -> fail $ "unknown operator `" ++ op ++ "'"
-        Just (k,priv) -> return (k,priv)
+        Just (k, attrs) -> return (k, attrs)
 
 -- | Parse an n-ary operator application for arbitrary n.
 naryOpApp :: Ord l => Parser (Term l) -> Parser (Term l)
@@ -807,16 +808,17 @@ functions =
         f   <- BC.pack <$> identifier <* opSlash
         k   <- fromIntegral <$> natural
         priv <- option Public (symbol "[private]" *> pure Private)
+        op  <- optionMaybe (angled identifier)
         if (BC.unpack f `elem` ["mun", "one", "exp", "mult", "inv", "pmult", "em", "zero", "xor"])
           then fail $ "`" ++ BC.unpack f ++ "` is a reserved function name for builtins."
           else return ()
         sig <- getState
         case lookup f [ o | o <- (S.toList $ stFunSyms sig)] of
-          Just kp' | kp' /= (k,priv) ->
-            fail $ "conflicting arities/private " ++
-                   show kp' ++ " and " ++ show (k,priv) ++
+          Just attrs' | attrs' /= (k, (priv, op)) ->
+            fail $ "conflicting function properties " ++
+                   -- show attrs' ++ " and " ++ show (k, (priv, op)) ++
                    " for `" ++ BC.unpack f
-          _ -> setState (addFunSym (f,(k,priv)) sig)
+          _ -> setState (addFunSym (f, (k, (priv, op))) sig)
 
 equations :: Parser ()
 equations =

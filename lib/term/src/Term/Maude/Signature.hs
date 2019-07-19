@@ -203,7 +203,11 @@ prettyMaudeSig sig = P.vcat
       , (enableXor,  "xor")
       ]
 
-    ppFunSymb (f,(k,priv)) = P.text $ BC.unpack f ++ "/" ++ show k ++ showPriv priv
-      where showPriv Private = " [private]"
-            showPriv Public  = ""
+    ppFunSymb (f, (k, (priv, op))) = P.text $
+      BC.unpack f ++ "/" ++ show k ++ showPriv priv ++ showOp op
+      where
+        showPriv Private = " [private]"
+        showPriv Public  = ""
+        showOp (Just o)  = " <" ++ o ++ ">"
+        showOp Nothing   = ""
 
