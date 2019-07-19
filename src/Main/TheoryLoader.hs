@@ -436,7 +436,9 @@ addMessageDeductionRuleVariants thy0
   | otherwise     = return thy
   where
     msig         = get (sigpMaudeSig . thySignature) thy0
-    rules        = subtermIntruderRules False msig ++ specialIntruderRules False
+    budget       = enableBudget msig
+    rules        = subtermIntruderRules False msig
+                   ++ specialIntruderRules False (enableBudget msig)
                    ++ (if enableMSet msig then multisetIntruderRules else [])
                    ++ (if enableXor msig then xorIntruderRules else [])
     thy          = addIntrRuleACsAfterTranslate rules thy0
@@ -454,9 +456,10 @@ addMessageDeductionRuleVariantsDiff thy0
   | otherwise     = return $ addIntrRuleLabels thy
   where
     msig         = get (sigpMaudeSig . diffThySignature) thy0
-    rules diff'  = subtermIntruderRules diff' msig ++ specialIntruderRules diff'
-                    ++ (if enableMSet msig then multisetIntruderRules else [])
-                    ++ (if enableXor msig then xorIntruderRules else [])
+    rules diff'  = subtermIntruderRules diff' msig
+                   ++ specialIntruderRules diff' (enableBudget msig)
+                   ++ (if enableMSet msig then multisetIntruderRules else [])
+                   ++ (if enableXor msig then xorIntruderRules else [])
     thy          = addIntrRuleACsDiffBoth (rules False) $ addIntrRuleACsDiffBothDiff (rules True) thy0
     addIntruderVariantsDiff mkRuless = do
         return $ addIntrRuleLabels (addIntrRuleACsDiffBothDiff (concatMap ($ msig) mkRuless) $ addIntrRuleACsDiffBoth (concatMap ($ msig) mkRuless) thy)

@@ -79,23 +79,26 @@ rule iequality:
 -}
 -- | @specialIntruderRules@ returns the special intruder rules that are
 --   included independently of the message theory
-specialIntruderRules :: Bool -> [IntrRuleAC]
-specialIntruderRules diff =
-    [ kuRule CoerceRule      [kdFact x_var]                 (x_var)         [] 
-    , kuRule PubConstrRule   []                             (x_pub_var)     [(x_pub_var)]
-    , kuRule FreshConstrRule [freshFact x_fresh_var] (x_fresh_var)          []
-    , Rule ISendRule [kuFact x_var]  [inFact x_var] [kLogFact x_var]        []
-    , Rule IRecvRule [outFact x_var] [kdFact x_var] []                      []
+specialIntruderRules :: Bool -> Bool -> [IntrRuleAC]
+specialIntruderRules diff budget =
+    [ kuRule CoerceRule        [kdFact x_var]          x_var            []
+    , kuRule PubConstrRule     []                      x_pub_var        [x_pub_var]
+    , kuRule FreshConstrRule   [freshFact x_fresh_var] x_fresh_var      []
+    , Rule ISendRule sendPrems [inFact x_var]          [kLogFact x_var] []
+    , Rule IRecvRule recvPrems [kdFact x_var]          []               []
     ] ++
-    if diff 
-       then [ Rule IEqualityRule [kuFact x_var, kdFact x_var]  [] [] [] ]
-       else []
+    [ Rule IEqualityRule [kuFact x_var, kdFact x_var]  [] [] [] | diff]
   where
-    kuRule name prems t nvs = Rule name prems [kuFact t] [kuFact t] nvs
+    kuRule name prems t = Rule name prems [kuFact t] [kuFact t]
 
     x_var       = varTerm (LVar "x"  LSortMsg   0)
     x_pub_var   = varTerm (LVar "x"  LSortPub   0)
     x_fresh_var = varTerm (LVar "x"  LSortFresh 0)
+
+    o_send = fAppNoEq (pack "oSend", (0, Public)) []
+    o_recv = fAppNoEq (pack "oRecv", (0, Public)) []
+    sendPrems = kuFact x_var : [tokenFact o_send | budget]
+    recvPrems = outFact x_var : [tokenFact o_recv | budget]
 
 
 ------------------------------------------------------------------------------
@@ -104,8 +107,10 @@ specialIntruderRules diff =
 
 -- | @destuctionRules diff st@ returns the destruction rules for the given
 -- context subterm rule @st@
-destructionRules :: Bool -> CtxtStRule -> [IntrRuleAC]
-destructionRules bool (CtxtStRule lhs@(viewTerm -> FApp _ _) (StRhs (pos:[]) rhs)) | (bool || (frees rhs /= []) || (containsPrivate rhs)) =
+destructionRules :: Bool -> Bool -> CtxtStRule -> [IntrRuleAC]
+destructionRules diff budget
+  (CtxtStRule lhs@(viewTerm -> FApp _ _) (StRhs (pos:[]) rhs)) |
+  (diff || (frees rhs /= []) || (containsPrivate rhs)) =
     go [] lhs pos empty []
   where
     go _      _                       []     _ _                     = []
@@ -128,11 +133,11 @@ destructionRules bool (CtxtStRule lhs@(viewTerm -> FApp _ _) (StRhs (pos:[]) rhs
     go _      (viewTerm -> Lit _)                         (_:_) _ _  =
         error "IntruderRules.destructionRules: impossible, position invalid"   
      
-destructionRules bool (CtxtStRule lhs (StRhs (pos:posit) rhs)) 
-    | (bool || (frees rhs /= []) || (containsPrivate rhs)) = 
-       destructionRules bool (CtxtStRule lhs (StRhs [pos] rhs)) 
-           ++ destructionRules bool (CtxtStRule lhs (StRhs posit rhs))
-destructionRules _ _ = []
+destructionRules diff budget (CtxtStRule lhs (StRhs (pos:posit) rhs)) 
+    | (diff || (frees rhs /= []) || (containsPrivate rhs)) = 
+       destructionRules diff budget (CtxtStRule lhs (StRhs [pos] rhs)) 
+           ++ destructionRules diff budget (CtxtStRule lhs (StRhs posit rhs))
+destructionRules _ _ _ = []
 
 -- returns all equations with private constructors on the RHS
 privateConstructorEquations :: [CtxtStRule] -> [(LNTerm, ByteString)]
@@ -187,13 +192,16 @@ minimizeIntruderRules diff rules =
 --   the subterm (not Xor, DH, and MSet) part of the given signature.
 subtermIntruderRules :: Bool -> MaudeSig -> [IntrRuleAC]
 subtermIntruderRules diff maudeSig =
-   minimizeIntruderRules diff $ concatMap (destructionRules diff) (S.toList $ stRules maudeSig)
-     ++ constructionRules (stFunSyms maudeSig) ++ privateConstructorRules (S.toList $ stRules maudeSig) 
+  minimizeIntruderRules diff $ concatMap (destructionRules diff budget) (S.toList $ stRules maudeSig)
+    ++ constructionRules budget (stFunSyms maudeSig)
+    ++ privateConstructorRules (S.toList $ stRules maudeSig) 
+  where
+    budget = enableBudget maudeSig
 
 -- | @constructionRules fSig@ returns the construction rules for the given
 -- function signature @fSig@
-constructionRules :: NoEqFunSig -> [IntrRuleAC]
-constructionRules fSig =
+constructionRules :: Bool -> NoEqFunSig -> [IntrRuleAC]
+constructionRules budget fSig =
     [ createRule s k | (s,(k,Public)) <- S.toList fSig ]
   where
     createRule s k = Rule (ConstrRule (append (pack "_") s)) (map kuFact vars) [concfact] [concfact] []

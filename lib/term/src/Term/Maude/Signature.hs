@@ -18,6 +18,7 @@ module Term.Maude.Signature (
   , enableMSet
   , enableDiff
   , enableXor
+  , enableBudget
   , stFunSyms
   , stRules
   , funSyms
@@ -38,6 +39,7 @@ module Term.Maude.Signature (
   , xorMaudeSig
   , minimalMaudeSig
   , enableDiffMaudeSig
+  , enableBudgetMaudeSig
 
   -- * extend maude signatures
   , addFunSym
@@ -78,6 +80,7 @@ data MaudeSig = MaudeSig
     , enableMSet         :: Bool
     , enableXor          :: Bool
     , enableDiff         :: Bool
+    , enableBudget       :: Bool
     , stFunSyms          :: S.Set NoEqSym -- ^ function signature for subterm theory
     , stRules            :: S.Set CtxtStRule  -- ^ rewriting rules for subterm theory
 
@@ -105,18 +108,19 @@ maudeSig msig@(MaudeSig {enableDH,enableBP,enableMSet,enableXor,enableDiff=_,stF
 
 -- | A monoid instance to combine maude signatures.
 instance Semigroup MaudeSig where
-    MaudeSig dh1 bp1 mset1 xor1 diff1 stFunSyms1 stRules1 _ _ <>
-      MaudeSig dh2 bp2 mset2 xor2 diff2 stFunSyms2 stRules2 _ _ =
+    MaudeSig dh1 bp1 mset1 xor1 diff1 bud1 stFunSyms1 stRules1 _ _ <>
+      MaudeSig dh2 bp2 mset2 xor2 diff2 bud2 stFunSyms2 stRules2 _ _ =
           maudeSig (mempty {enableDH=dh1||dh2
                            ,enableBP=bp1||bp2
                            ,enableMSet=mset1||mset2
                            ,enableXor=xor1||xor2
                            ,enableDiff=diff1||diff2
+                           ,enableBudget=bud1||bud2
                            ,stFunSyms=S.union stFunSyms1 stFunSyms2
                            ,stRules=S.union stRules1 stRules2})
 
 instance Monoid MaudeSig where
-    mempty = MaudeSig False False False False False S.empty S.empty S.empty S.empty
+    mempty = MaudeSig False False False False False False S.empty S.empty S.empty S.empty
 
 -- | Non-AC function symbols.
 noEqFunSyms :: MaudeSig -> NoEqFunSig
@@ -170,9 +174,10 @@ minimalMaudeSig flag = maudeSig $ mempty {enableDiff=flag,stFunSyms=pairFunSig,s
 -- essentially pairMaudeSig, but with the enableDiff flag set according to "flag"
 -- -- MaudeSig False False False flag pairFunSig pairRules S.empty S.empty
 
--- | Signature with enableDiff set to True
-enableDiffMaudeSig :: MaudeSig
+-- | Signatures with parameters enabled
+enableDiffMaudeSig, enableBudgetMaudeSig :: MaudeSig
 enableDiffMaudeSig = maudeSig $ mempty {enableDiff=True}
+enableBudgetMaudeSig     = maudeSig $ mempty {enableBudget=True}
 
 ------------------------------------------------------------------------------
 -- Pretty Printing

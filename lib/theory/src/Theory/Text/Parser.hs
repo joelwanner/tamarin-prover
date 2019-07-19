@@ -766,8 +766,10 @@ builtins thy0 =do
           *> extendSig revealSignatureMaudeSig
       , try ( symbol "reliable-channel")
              *> return (Just transReliable)
-      , symbol "hashing"
+      , try (symbol "hashing")
           *> extendSig hashMaudeSig
+      , try (symbol "budget")
+          *> extendSig enableBudgetMaudeSig
       ]
 
 diffbuiltins :: Parser ()
