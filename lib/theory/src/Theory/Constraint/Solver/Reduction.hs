@@ -233,12 +233,12 @@ labelNodeId = \i rules parent -> do
 
     exploitPrem i ru (v, fa) = case fa of
         -- CR-rule *DG2_2* specialized for *In* facts.
-        Fact InFact ann [m] -> do
-            j <- freshLVar "vf" LSortNode
-            ruKnows <- mkISendRuleAC ann m
-            modM sNodes (M.insert j ruKnows)
-            modM sEdges (S.insert $ Edge (j, ConcIdx 0) (i, v))
-            exploitPrems j ruKnows
+        -- Fact InFact ann [m] -> do
+        --     j <- freshLVar "vf" LSortNode
+        --     ruKnows <- mkISendRuleAC ann m
+        --     modM sNodes (M.insert j ruKnows)
+        --     modM sEdges (S.insert $ Edge (j, ConcIdx 0) (i, v))
+        --     exploitPrems j ruKnows
 
         -- CR-rule *DG2_2* specialized for *Fr* facts.
         Fact FreshFact _ [m] -> do
