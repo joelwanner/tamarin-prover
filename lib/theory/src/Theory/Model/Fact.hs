@@ -130,7 +130,6 @@ data FactTag = ProtoFact Multiplicity String Int
                           -- a message using a construction rule.
              | TermFact   -- ^ internal fact, only used to convert terms to facts 
                           -- to simplify computations. should never occur in a graph.
-             | TokenFact  -- ^ Operation token for a budgeted adversary.
     deriving( Eq, Ord, Show, Typeable, Data, Generic, NFData, Binary )
 
 
@@ -286,7 +285,7 @@ protoFactAnn multi name an ts = Fact (ProtoFact multi name (length ts)) an ts
 
 -- | A fact denoting an adversary budget token.
 tokenFact :: t -> Fact t
-tokenFact = Fact TokenFact S.empty . return
+tokenFact = Fact (ProtoFact Linear "Op" 1) S.empty . return
 
 -- | Add annotations to an existing fact
 annotateFact :: S.Set FactAnnotation -> Fact t -> Fact t
@@ -327,7 +326,6 @@ factTagArity tag = case  tag of
     InFact          -> 1
     OutFact         -> 1
     TermFact        -> 1
-    TokenFact       -> 1
 
 -- | The arity of a 'Fact'.
 factArity :: Fact t -> Int
@@ -449,7 +447,6 @@ factTagName tag = case tag of
     FreshFact         -> "Fr"
     (ProtoFact _ n _) -> n
     TermFact          -> "Term"
-    TokenFact         -> "Op"
 
 -- | Show a fact tag as a 'String'. This is the 'factTagName' prefixed with
 -- the multiplicity.
