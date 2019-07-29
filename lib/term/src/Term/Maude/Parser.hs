@@ -29,6 +29,7 @@ import Control.Monad.Bind
 import Control.Basics
 
 import qualified Data.Set as S
+import qualified Data.List as L
 
 import qualified Data.ByteString as B
 import           Data.ByteString (ByteString)
@@ -275,17 +276,20 @@ parseTerm msig = choice
     nilSym  = ("nil", (0, (Public, Nothing)))
 
     parseFunSym ident args
-      | op `elem` allowedfunSyms = replaceMinusFun op
-      | otherwise                =
+      | L.any memCheck allowedfunSyms = replaceMinusFun op
+      | otherwise                     =
           error $ "Maude.Parser.parseTerm: unknown function "
                   ++ "symbol `" ++ show f ++ "', not in "
                   ++ show allowedfunSyms
-      where prefixLen      = BC.length funSymPrefix
+      where memCheck (f', (arity', (priv', _)))
+                           = f' == f && arity' == arity && priv' == priv
+            prefixLen      = BC.length funSymPrefix
             special        = ident `elem` ["list", "cons", "nil" ]
             priv           = if (not special) && BC.isPrefixOf funSymPrefixPriv ident 
                                then Private else Public
             f              = if special then ident else BC.drop prefixLen ident
-            op             = (f, (length args, (priv, Nothing)))
+            arity          = length args
+            op             = (f, (arity, (priv, Nothing)))
             allowedfunSyms = [consSym, nilSym]
                 ++ (map replaceUnderscoreFun $ S.toList $ noEqFunSyms msig)
 
