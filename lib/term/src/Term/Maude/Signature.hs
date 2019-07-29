@@ -39,7 +39,7 @@ module Term.Maude.Signature (
   , xorMaudeSig
   , minimalMaudeSig
   , enableDiffMaudeSig
-  , enableBudgetMaudeSig
+  , budgetMaudeSig
 
   -- * extend maude signatures
   , addFunSym
@@ -174,10 +174,13 @@ minimalMaudeSig flag = maudeSig $ mempty {enableDiff=flag,stFunSyms=pairFunSig,s
 -- essentially pairMaudeSig, but with the enableDiff flag set according to "flag"
 -- -- MaudeSig False False False flag pairFunSig pairRules S.empty S.empty
 
--- | Signatures with parameters enabled
-enableDiffMaudeSig, enableBudgetMaudeSig :: MaudeSig
+-- | Signature with enableDiff set to True
+enableDiffMaudeSig :: MaudeSig
 enableDiffMaudeSig = maudeSig $ mempty {enableDiff=True}
-enableBudgetMaudeSig     = maudeSig $ mempty {enableBudget=True}
+
+-- | Signature for adversary budget
+budgetMaudeSig :: MaudeSig
+budgetMaudeSig = maudeSig $ mempty {enableBudget=True, stFunSyms=budgetFunSig}
 
 ------------------------------------------------------------------------------
 -- Pretty Printing

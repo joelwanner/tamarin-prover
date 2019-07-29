@@ -39,6 +39,11 @@ extractMessageSym = ("getMessage", (1, (Public, Nothing)))
 trueSym :: NoEqSym
 trueSym = ("true", (0, (Public, Nothing)))
 
+-- | Operation symbols for adversary budget.
+opSyms :: [NoEqSym]
+opSyms = [ (op, (0, (Public, Nothing))) | op <- opNames ]
+  where opNames = [ "oRecv", "oSend", "oSenc", "oHash", "oAenc", "oSign", "oVerify", "oGenPk" ]
+
 ----------------------------------------------------------------------
 -- Builtin signatures
 ----------------------------------------------------------------------
@@ -62,3 +67,8 @@ revealSignatureFunSig = S.fromList $ [ revealSignSym, revealVerifySym, extractMe
 -- | The signature for hashing.
 hashFunSig :: NoEqFunSig
 hashFunSig = S.fromList [ hashSym ]
+
+-- | The signature for adversary budget.
+budgetFunSig :: NoEqFunSig
+budgetFunSig = S.fromList opSyms
+

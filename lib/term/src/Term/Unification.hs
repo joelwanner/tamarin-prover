@@ -49,7 +49,7 @@ module Term.Unification (
   , enableBudget
   , minimalMaudeSig
   , enableDiffMaudeSig
-  , enableBudgetMaudeSig
+  , budgetMaudeSig
   , dhMaudeSig
   , bpMaudeSig
   , xorMaudeSig

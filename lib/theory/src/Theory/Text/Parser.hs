@@ -770,7 +770,7 @@ builtins thy0 =do
       , try (symbol "hashing")
           *> extendSig hashMaudeSig
       , try (symbol "budget")
-          *> extendSig enableBudgetMaudeSig
+          *> extendSig budgetMaudeSig
       ]
 
 diffbuiltins :: Parser ()
