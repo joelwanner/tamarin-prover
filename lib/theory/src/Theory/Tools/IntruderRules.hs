@@ -125,11 +125,11 @@ destructionRules diff budget
         posname = "_" ++ show i ++ pd
         name    = append (pack posname) funs
 
-        mk_token (Just o) = [tokenFact const]
+        mk_token (Just o) = [tokenFact const | budget]
           where const = fAppNoEq (pack o, (0, (Public, Nothing))) []
         mk_token Nothing = []
 
-        prems = ((kdFact  t'):(map kuFact uprems')) ++ (mk_token op)
+        prems = ((kdFact  t'):(map kuFact uprems')) ++ mk_token op
         irule = if {-trace (show lhs ++ " " ++ show pos ++ " " ++ show posname ++ " " ++ show rhs ++ " " ++ show (lhs `atPos` pos) ++ " " ++ show (frees rhs == []))-} (t' /= rhs && rhs `notElem` uprems')
                 then [ Rule (DestrRule name (-1) (rhs == lhs `atPos` pos) (frees rhs == []))
                             prems [kdFact rhs] [] [] ]
@@ -215,10 +215,10 @@ constructionRules budget fSig =
             m        = fAppNoEq (s,(k,(Public,op))) vars
             concfact = kuFact m
 
-            mk_token (Just o) = [tokenFact const]
-              where const = fAppNoEq (pack o, (0, (Public, Nothing))) []
+            mk_token (Just o) = [tokenFact op_const | budget]
+              where op_const = fAppNoEq (pack o, (0, (Public, Nothing))) []
             mk_token Nothing = []
-            prems = (map kuFact vars) ++ (mk_token op)
+            prems = map kuFact vars ++ mk_token op
 
 ------------------------------------------------------------------------------
 -- Diffie-Hellman Intruder Rules
