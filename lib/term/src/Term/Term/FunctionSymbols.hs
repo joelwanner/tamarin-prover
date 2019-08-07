@@ -131,7 +131,7 @@ pairSym  = ("pair", (2, (Public, Nothing)))
 -- | Diff.
 diffSym  = (diffSymString, (2, (Private, Nothing)))
 -- | Exponentiation.
-expSym   = (expSymString, (2, (Public, Nothing)))
+expSym   = (expSymString, (2, (Public, Just "oExp")))
 -- | The inverse in the groups of exponents.
 invSym   = (invSymString, (1, (Public, Just "oInv")))
 -- | The one in the group of exponents.

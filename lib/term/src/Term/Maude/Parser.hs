@@ -104,11 +104,8 @@ replaceMinusFun (s, p) = (replaceMinus s, p)
 -- | Pretty print an AC symbol for Maude.
 ppMaudeACSym :: ACSym -> ByteString
 ppMaudeACSym o =
-    funSymPrefix <> case o of
-                      Mult  -> "mult"
-                      Union -> "mun"
-                      Xor   -> "xor"
-    <> opTypeDelim <> opTypeFree
+    funSymPrefix <> case o of Mult -> "mult"; Union -> "mun"; Xor -> "xor"; <>
+    opTypeDelim  <> case o of Mult -> "oMult"; Union -> opTypeFree; Xor -> "oXor"
 
 -- | Pretty print a non-AC symbol for Maude.
 ppMaudeNoEqSym :: NoEqSym -> ByteString
@@ -168,27 +165,27 @@ ppTheory msig = BC.unlines $
     ++
     (if enableMSet msig
        then
-       [ theoryOp "mun : Msg Msg -> Msg [comm assoc]" ]
+       [ theoryOp "mun--Free : Msg Msg -> Msg [comm assoc]" ]
        else [])
     ++
     (if enableDH msig
        then
-       [ theoryOp "one : -> Msg"
-       , theoryOp "exp : Msg Msg -> Msg"
-       , theoryOp "mult : Msg Msg -> Msg [comm assoc]"
-       , theoryOp "inv : Msg -> Msg" ]
+       [ theoryOp "one--Free : -> Msg"
+       , theoryOp "exp--oExp : Msg Msg -> Msg"
+       , theoryOp "mult--oMult : Msg Msg -> Msg [comm assoc]"
+       , theoryOp "inv--oInv : Msg -> Msg" ]
        else [])
     ++
     (if enableBP msig
        then
-       [ theoryOp "pmult : Msg Msg -> Msg"
-       , theoryOp "em : Msg Msg -> Msg [comm]" ]
+       [ theoryOp "pmult--oPmult : Msg Msg -> Msg"
+       , theoryOp "em--Free : Msg Msg -> Msg [comm]" ]
        else [])
     ++
     (if enableXor msig
        then
-       [ theoryOp "zero : -> Msg"
-       , theoryOp "xor : Msg Msg -> Msg [comm assoc]" ]
+       [ theoryOp "zero--Free : -> Msg"
+       , theoryOp "xor--oXor : Msg Msg -> Msg [comm assoc]" ]
        else [])
     ++
     map theoryFunSym (S.toList $ stFunSyms msig)
