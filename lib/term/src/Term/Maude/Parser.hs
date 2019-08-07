@@ -29,7 +29,6 @@ import Control.Monad.Bind
 import Control.Basics
 
 import qualified Data.Set as S
-import qualified Data.List as L
 
 import qualified Data.ByteString as B
 import           Data.ByteString (ByteString)
@@ -75,6 +74,11 @@ funSymPrefix = "tamX"
 funSymPrefixPriv :: ByteString
 funSymPrefixPriv = "tamP"
 
+-- | Delimiter and special suffix for operation type annotation.
+opTypeDelim, opTypeFree :: ByteString
+opTypeDelim = "--"
+opTypeFree = "Free"
+
 -- | Replace underscores "_" with minus "-" for Maude.
 replaceUnderscore :: ByteString -> ByteString
 replaceUnderscore s = BC.map f s
@@ -104,15 +108,20 @@ ppMaudeACSym o =
                       Mult  -> "mult"
                       Union -> "mun"
                       Xor   -> "xor"
+    <> opTypeDelim <> opTypeFree
 
 -- | Pretty print a non-AC symbol for Maude.
 ppMaudeNoEqSym :: NoEqSym -> ByteString
-ppMaudeNoEqSym (o,(_,(Private,_))) = funSymPrefixPriv <> replaceUnderscore o
-ppMaudeNoEqSym (o,(_,(Public,_)))  = funSymPrefix     <> replaceUnderscore o
+ppMaudeNoEqSym (o,(_,(priv,op))) = prefix priv <> replaceUnderscore o <> opTypeDelim <> suffix op
+  where
+    prefix Public    = funSymPrefix
+    prefix Private   = funSymPrefixPriv
+    suffix (Just s)  = BC.pack s
+    suffix Nothing   = opTypeFree
 
 -- | Pretty print a C symbol for Maude.
 ppMaudeCSym :: CSym -> ByteString
-ppMaudeCSym EMap = funSymPrefix <> emapSymString
+ppMaudeCSym EMap = funSymPrefix <> emapSymString <> opTypeDelim <> opTypeFree
 
 
 -- | @ppMaude t@ pretty prints the term @t@ for Maude.
@@ -189,10 +198,15 @@ ppTheory msig = BC.unlines $
     [ "endfm" ]
   where
     theoryOpNoEq priv fsort =
-        "  op " <> (if (priv==Private) then funSymPrefixPriv else funSymPrefix) <> fsort <>" ."
+        "  op " <> (if (priv==Private) then funSymPrefixPriv else funSymPrefix) <> fsort
+        <>" ."
     theoryOp = theoryOpNoEq Public
-    theoryFunSym (s,(ar,(priv,_))) =
-        theoryOpNoEq priv (replaceUnderscore s <> " : " <> (B.concat $ replicate ar "Msg ") <> " -> Msg")
+    sym_attr s optype = replaceUnderscore s <> opTypeDelim
+      <> case optype of
+           Just o -> BC.pack o
+           Nothing -> opTypeFree
+    theoryFunSym (s,(ar,(priv,op))) =
+        theoryOpNoEq priv (sym_attr s op <> " : " <> (B.concat $ replicate ar "Msg ") <> " -> Msg")
     theoryRule (l `RRule` r) =
         "  eq " <> ppMaude lm <> " = " <> ppMaude rm <> " [variant] ."
       where (lm,rm) = evalBindT ((,) <$>  lTermToMTerm' l <*> lTermToMTerm' r) noBindings
@@ -276,20 +290,21 @@ parseTerm msig = choice
     nilSym  = ("nil", (0, (Public, Nothing)))
 
     parseFunSym ident args
-      | L.any memCheck allowedfunSyms = replaceMinusFun op
-      | otherwise                     =
+      | op `elem` allowedfunSyms = replaceMinusFun op
+      | otherwise                =
           error $ "Maude.Parser.parseTerm: unknown function "
                   ++ "symbol `" ++ show f ++ "', not in "
                   ++ show allowedfunSyms
-      where memCheck (f', (arity', (priv', _)))
-                           = f' == f && arity' == arity && priv' == priv
-            prefixLen      = BC.length funSymPrefix
+      where prefixLen      = BC.length funSymPrefix
             special        = ident `elem` ["list", "cons", "nil" ]
             priv           = if (not special) && BC.isPrefixOf funSymPrefixPriv ident 
                                then Private else Public
-            f              = if special then ident else BC.drop prefixLen ident
+            (fstr, suffix) = BC.breakSubstring opTypeDelim ident
+            opstr          = BC.drop (BC.length opTypeDelim) suffix
+            optype         = if opstr == opTypeFree then Nothing else Just (BC.unpack opstr)
+            f              = if special then ident else BC.drop prefixLen fstr
             arity          = length args
-            op             = (f, (arity, (priv, Nothing)))
+            op             = (f, (arity, (priv, optype)))
             allowedfunSyms = [consSym, nilSym]
                 ++ (map replaceUnderscoreFun $ S.toList $ noEqFunSyms msig)
 
