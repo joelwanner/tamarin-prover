@@ -243,26 +243,31 @@ dhIntruderRules diff = reader $ \hnd -> minimizeIntruderRules diff $
     x_var_0 = varTerm (LVar "x" LSortMsg 0)
     x_var_1 = varTerm (LVar "x" LSortMsg 1)
 
+    mkToken op = tokenFact $ fAppNoEq (pack op, (0, (Public, Nothing))) []
+
     expRule mkInfo kudFact mkAction =
-        Rule mkInfo [bfact, efact] [concfact] (mkAction concfact) []
+        Rule mkInfo [bfact, efact, token] [concfact] (mkAction concfact) []
       where
         bfact = kudFact x_var_0
         efact = kuFact  x_var_1
+        token = mkToken "oExp"
         conc = fAppExp (x_var_0, x_var_1)
         concfact = kudFact conc
 
     multRule mkInfo kudFact mkAction =
-        Rule mkInfo [bfact, efact] [concfact] (mkAction concfact) []
+        Rule mkInfo [bfact, efact, token] [concfact] (mkAction concfact) []
       where
         bfact = kudFact x_var_0
         efact = kuFact  x_var_1
+        token = mkToken "oMult"
         conc = fAppAC Mult [x_var_0, x_var_1]
         concfact = kudFact conc
 
     invRule mkInfo kudFact mkAction =
-        Rule mkInfo [bfact] [concfact] (mkAction concfact) []
+        Rule mkInfo [bfact, token] [concfact] (mkAction concfact) []
       where
         bfact    = kudFact x_var_0
+        token    = mkToken "oInv"
         conc     = fAppInv x_var_0
         concfact = kudFact conc
 
